@@ -1,0 +1,44 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Add a Tactical Traps lock",
+        "description": "Pick the lock's Bluetooth address (or type it as AA:BB:CC:DD:EE:FF) and enter its PIN. The lock must be powered and in range of a Bluetooth adapter or proxy, and the phone app must be closed.",
+        "data": {
+          "address": "Bluetooth address",
+          "pin": "Lock PIN",
+          "name": "Name (optional)"
+        }
+      },
+      "confirm": {
+        "title": "Set up {name}",
+        "description": "Enter the PIN for {name}.",
+        "data": {
+          "pin": "Lock PIN"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect or the PIN was rejected. Check that the lock is in range and powered, the phone app is closed, and the PIN is correct.",
+      "unknown": "Unexpected error. See the logs for details."
+    },
+    "abort": {
+      "already_configured": "This lock is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tactical Traps options",
+        "data": {
+          "poll_interval": "Status poll interval (seconds)",
+          "auto_relock_seconds": "Auto-relock delay (seconds, 0 = off)"
+        },
+        "data_description": {
+          "auto_relock_seconds": "After an unlock, automatically re-engage the lock this many seconds later. Important for gravity-drop cabinets where the lock holds the door. 0 disables it."
+        }
+      }
+    }
+  }
+}
