@@ -6,6 +6,10 @@ It uses Home Assistant's built-in Bluetooth stack, talks the lock's `F5` protoco
 directly (login → status → `token XOR 0x35` toggle), and exposes each cabinet as a
 standard `lock.` entity with an optional auto-relock for gravity-drop cabinets.
 
+> Prefer the **add-on** (its own UI, BLE console, Brutus/Listen/Calibrate tools)?
+> That lives at <https://github.com/sam3gp8/ha-tactical-traps>. This repository is
+> the lighter, native **integration** for everyday use.
+
 ## Install via HACS
 
 1. HACS → **⋮ → Custom repositories**.
@@ -19,18 +23,23 @@ Requires a Bluetooth adapter on the Home Assistant host or an **ESPHome Bluetoot
 proxy** in range of the cabinet. Close the phone app while pairing (the lock allows
 one connection at a time).
 
-Or use the one-click link (opens the dialog pre-filled):
-
-[![Open your Home Assistant instance and open a repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=sam3gp8&repository=ha-tactical-traps&category=integration)
-
-## Options
+## Options & battery life
 
 **Settings → Devices & Services → Tactical Traps → Configure**:
 
-- **Status poll interval** — how often the lock state is read (default 30 s).
-- **Auto-relock delay** — after any unlock, automatically re-engage the lock after
-  this many seconds. Set it for gravity-drop cabinets where the lock is the only
-  thing holding the door. `0` disables it.
+- **Proof-of-life check (hours)** — how often Home Assistant briefly wakes the lock
+  to confirm it's alive and read its state. Default **12 h** (twice a day). Set **0**
+  to never poll — the lock is then contacted **only when you send a lock/unlock
+  command**, and its state in Home Assistant is the last known value between commands.
+- **Auto-relock delay (seconds)** — after any unlock, automatically re-engage the lock
+  after this many seconds (for gravity-drop cabinets). `0` disables it.
+
+The integration **never holds the Bluetooth connection open** — every operation
+connects, acts, and disconnects, so the lock can return to low-power advertising and
+sleep. That, plus the infrequent (or disabled) polling, is what keeps the battery
+from draining. Trade-off: if the lock is operated by its keypad or the phone app,
+Home Assistant won't reflect it until the next proof-of-life check (or the next
+command, if polling is off).
 
 ## Lost your PIN?
 

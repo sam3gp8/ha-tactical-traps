@@ -22,9 +22,9 @@ import homeassistant.helpers.config_validation as cv
 from .const import (
     CONF_AUTO_RELOCK,
     CONF_PIN,
-    CONF_POLL_INTERVAL,
+    CONF_POLL_HOURS,
     DEFAULT_AUTO_RELOCK,
-    DEFAULT_POLL_INTERVAL,
+    DEFAULT_POLL_HOURS,
     DOMAIN,
 )
 from .tactical import TacticalBLEClient, TacticalError
@@ -145,9 +145,9 @@ class TacticalOptionsFlow(OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Optional(
-                        CONF_POLL_INTERVAL,
-                        default=opts.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=5, max=3600)),
+                        CONF_POLL_HOURS,
+                        default=opts.get(CONF_POLL_HOURS, DEFAULT_POLL_HOURS),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=168)),
                     vol.Optional(
                         CONF_AUTO_RELOCK,
                         default=opts.get(CONF_AUTO_RELOCK, DEFAULT_AUTO_RELOCK),

@@ -32,10 +32,11 @@
       "init": {
         "title": "Tactical Traps options",
         "data": {
-          "poll_interval": "Status poll interval (seconds)",
-          "auto_relock_seconds": "Auto-relock delay (seconds, 0 = off)"
+          "poll_interval_hours": "Proof-of-life check (hours; 0 = only on command)",
+          "auto_relock_seconds": "Auto-relock delay (seconds; 0 = off)"
         },
         "data_description": {
+          "poll_interval_hours": "How often to wake the lock just to confirm it's alive and read its state. The connection is dropped after every check so the lock can sleep, which is much easier on the battery. Set 0 to never poll - the lock is then contacted only when you send a lock/unlock command (its state in Home Assistant is the last known value between commands).",
           "auto_relock_seconds": "After an unlock, automatically re-engage the lock this many seconds later. Important for gravity-drop cabinets where the lock holds the door. 0 disables it."
         }
       }
