@@ -8,6 +8,9 @@ standard `lock.` entity with an optional auto-relock for gravity-drop cabinets.
 
 ## Install via HACS
 
+[![Open your Home Assistant instance and open a repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=sam3gp8&repository=ha-tactical-traps&category=integration)
+
+
 1. HACS → **⋮ → Custom repositories**.
 2. Repository: `https://github.com/sam3gp8/tactical-traps`, type: **Integration** → **Add**.
 3. Find **Tactical Traps** in HACS, **Download**, and **restart Home Assistant**.
