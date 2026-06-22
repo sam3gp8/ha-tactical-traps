@@ -21,9 +21,11 @@ import homeassistant.helpers.config_validation as cv
 
 from .const import (
     CONF_AUTO_RELOCK,
+    CONF_KEEP_ALIVE,
     CONF_PIN,
     CONF_POLL_HOURS,
     DEFAULT_AUTO_RELOCK,
+    DEFAULT_KEEP_ALIVE,
     DEFAULT_POLL_HOURS,
     DOMAIN,
 )
@@ -152,6 +154,10 @@ class TacticalOptionsFlow(OptionsFlow):
                         CONF_AUTO_RELOCK,
                         default=opts.get(CONF_AUTO_RELOCK, DEFAULT_AUTO_RELOCK),
                     ): vol.All(vol.Coerce(int), vol.Range(min=0, max=120)),
+                    vol.Optional(
+                        CONF_KEEP_ALIVE,
+                        default=opts.get(CONF_KEEP_ALIVE, DEFAULT_KEEP_ALIVE),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=300)),
                 }
             ),
         )

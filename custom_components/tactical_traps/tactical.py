@@ -183,7 +183,12 @@ class TacticalBLEClient:
         return payload[0]
 
     async def ensure(self, target: int) -> int:
-        """Bring the bolt to `target`; idempotent. Returns the resulting state."""
+        """Bring the bolt to `target`; idempotent. Returns the resulting state.
+
+        An accepted toggle (reply dir 0x10) means the bolt actuated, so we report
+        the target state immediately instead of waiting and re-reading status —
+        that saves a settle delay and a full round-trip on every lock/unlock.
+        """
         await self._login_if_needed()
         res = await self._exchange(status_frame(), CMD_STATUS)
         if res is None or not res[2]:
@@ -200,10 +205,6 @@ class TacticalBLEClient:
                 f"lock refused the toggle (0x{res[1]:02X}) for session token "
                 f"0x{token:02X}"
             )
-        await asyncio.sleep(0.4)
-        res = await self._exchange(status_frame(), CMD_STATUS)
-        if res and res[2]:
-            return res[2][0]
         return target
 
     async def validate(self) -> bool:

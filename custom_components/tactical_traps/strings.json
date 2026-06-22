@@ -33,11 +33,13 @@
         "title": "Tactical Traps options",
         "data": {
           "poll_interval_hours": "Proof-of-life check (hours; 0 = only on command)",
-          "auto_relock_seconds": "Auto-relock delay (seconds; 0 = off)"
+          "auto_relock_seconds": "Auto-relock delay (seconds; 0 = off)",
+          "keep_alive_seconds": "Keep connection warm after use (seconds; 0 = off)"
         },
         "data_description": {
           "poll_interval_hours": "How often to wake the lock just to confirm it's alive and read its state. The connection is dropped after every check so the lock can sleep, which is much easier on the battery. Set 0 to never poll - the lock is then contacted only when you send a lock/unlock command (its state in Home Assistant is the last known value between commands).",
-          "auto_relock_seconds": "After an unlock, automatically re-engage the lock this many seconds later. Important for gravity-drop cabinets where the lock holds the door. 0 disables it."
+          "auto_relock_seconds": "After an unlock, automatically re-engage the lock this many seconds later. Important for gravity-drop cabinets where the lock holds the door. 0 disables it.",
+          "keep_alive_seconds": "After a command, hold the Bluetooth connection open this long so the next action - especially the auto-relock or a quick re-open - skips the slow reconnect and is near-instant. Costs a little battery only during that short window. 0 disconnects immediately (best battery, but every command pays the full reconnect)."
         }
       }
     }
