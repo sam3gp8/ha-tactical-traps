@@ -18,6 +18,7 @@ standard `lock.` entity with an optional auto-relock for gravity-drop cabinets.
 Or use the one-click link (opens the dialog pre-filled):
 
 [![Open your Home Assistant instance and open a repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=sam3gp8&repository=ha-tactical-traps&category=integration)
+
 Requires a Bluetooth adapter on the Home Assistant host or an **ESPHome Bluetooth
 proxy** in range of the cabinet. Close the phone app while pairing (the lock allows
 one connection at a time).
