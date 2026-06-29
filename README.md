@@ -6,18 +6,18 @@ It uses Home Assistant's built-in Bluetooth stack, talks the lock's `F5` protoco
 directly (login → status → `token XOR 0x35` toggle), and exposes each cabinet as a
 standard `lock.` entity with an optional auto-relock for gravity-drop cabinets.
 
+> Prefer the **add-on** (its own UI, BLE console, Brutus/Listen/Calibrate tools)?
+> That lives at <https://github.com/sam3gp8/ha-tactical-traps>. This repository is
+> the lighter, native **integration** for everyday use.
+
 ## Install via HACS
 
 1. HACS → **⋮ → Custom repositories**.
-2. Repository: `https://github.com/sam3gp8/ha-tactical-traps`, type: **Integration** → **Add**.
+2. Repository: `https://github.com/sam3gp8/tactical-traps`, type: **Integration** → **Add**.
 3. Find **Tactical Traps** in HACS, **Download**, and **restart Home Assistant**.
 4. **Settings → Devices & Services**. If Home Assistant has already seen the lock over
    Bluetooth it appears as a discovered device — otherwise **+ Add Integration → Tactical Traps**.
 5. Confirm/enter the lock's Bluetooth address and **PIN**.
-
-Or use the one-click link (opens the dialog pre-filled):
-
-[![Open your Home Assistant instance and open a repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=sam3gp8&repository=ha-tactical-traps&category=integration)
 
 Requires a Bluetooth adapter on the Home Assistant host or an **ESPHome Bluetooth
 proxy** in range of the cabinet. Close the phone app while pairing (the lock allows
@@ -81,6 +81,12 @@ your own.
 
 - The protocol frame codec is unit-tested; the Bluetooth/Home Assistant glue should
   be validated on your own hardware.
+- **"Characteristic … fff2 … was not found":** this means the Bluetooth service
+  cache for the lock went stale or empty, so the lock's characteristics didn't
+  resolve. The integration now detects this and automatically clears the cache,
+  re-discovers, and auto-detects the write/notify characteristics. If it still
+  happens, power-cycle the lock and/or move it closer to the adapter or a Bluetooth
+  proxy, then reload the integration.
 - Independent interoperability project — **not affiliated with or endorsed by
   Tactical Traps**. Use it only on locks you own.
 

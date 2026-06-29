@@ -17,6 +17,13 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
+try:  # const has no Home Assistant dependencies; literals are the fallback for
+    from .const import NOTIFY_UUID, SERVICE_UUID, WRITE_UUID  # standalone tests
+except ImportError:  # running tactical.py directly (codec self-test)
+    SERVICE_UUID = "0000fff0-0000-1000-8000-00805f9b34fb"
+    WRITE_UUID = "0000fff2-0000-1000-8000-00805f9b34fb"
+    NOTIFY_UUID = "0000fff1-0000-1000-8000-00805f9b34fb"
+
 # Opcodes
 CMD_LOGIN = 0x0F
 CMD_STATUS = 0x60
@@ -94,44 +101,113 @@ class TacticalBLEClient:
         self.pin = pin
         self._client = None
         self._authed = False
+        self._write_char = None
+        self._notify_char = None
         self._queue: asyncio.Queue[bytes] = asyncio.Queue()
 
     # ---- connection lifecycle ----
     async def _ensure_connected(self) -> None:
-        if self._client is not None and self._client.is_connected:
+        if (
+            self._client is not None
+            and self._client.is_connected
+            and self._write_char is not None
+            and self._notify_char is not None
+        ):
             return
         # imported lazily so the pure codec can be tested without HA installed
         from bleak_retry_connector import (
             BleakClientWithServiceCache,
+            clear_cache,
             establish_connection,
         )
         from homeassistant.components import bluetooth
 
-        from .const import NOTIFY_UUID
-
-        device = bluetooth.async_ble_device_from_address(
-            self._hass, self.address, connectable=True
-        )
-        if device is None:
-            raise TacticalError(
-                "lock not found by any Bluetooth adapter or proxy — is it in range "
-                "and powered, and is the phone app closed?"
+        def _fresh_device():
+            dev = bluetooth.async_ble_device_from_address(
+                self._hass, self.address, connectable=True
             )
+            if dev is None:
+                raise TacticalError(
+                    "lock not found by any Bluetooth adapter or proxy — is it in "
+                    "range and powered, and is the phone app closed?"
+                )
+            return dev
+
         self._authed = False
         self._client = await establish_connection(
-            BleakClientWithServiceCache, device, self.address,
+            BleakClientWithServiceCache, _fresh_device(), self.address,
             disconnected_callback=self._on_disconnect,
         )
-        await self._client.start_notify(NOTIFY_UUID, self._on_notify)
+        write, notify = self._resolve_chars()
+        if write is None or notify is None:
+            # The cached GATT table is stale/empty (FFF2/FFF1 don't resolve).
+            # Force a fresh discovery and try once more.
+            for _clear in (self._client.clear_cache, lambda: clear_cache(self.address)):
+                try:
+                    await _clear()
+                except Exception:  # noqa: BLE001 - best effort
+                    pass
+            try:
+                await self._client.disconnect()
+            except Exception:  # noqa: BLE001
+                pass
+            self._client = await establish_connection(
+                BleakClientWithServiceCache, _fresh_device(), self.address,
+                disconnected_callback=self._on_disconnect,
+            )
+            write, notify = self._resolve_chars()
+        if write is None or notify is None:
+            await self.disconnect()
+            raise TacticalError(
+                "lock GATT characteristics (FFF2/FFF1) not found even after a fresh "
+                "service discovery — power-cycle the lock and/or move it closer to "
+                "the adapter or a Bluetooth proxy"
+            )
+        self._write_char, self._notify_char = write, notify
+        await self._client.start_notify(self._notify_char, self._on_notify)
+
+    def _resolve_chars(self):
+        """Find the write + notify characteristics. Try the known FFF2/FFF1 UUIDs
+        first, then auto-detect from the service table (preferring the FFF0 vendor
+        service) so a slightly different layout still works."""
+        svcs = self._client.services
+        write = svcs.get_characteristic(WRITE_UUID)
+        notify = svcs.get_characteristic(NOTIFY_UUID)
+        if write is not None and notify is not None:
+            return write, notify
+
+        def scan(restrict_to_vendor_service: bool):
+            w, n = write, notify
+            for ch in svcs.characteristics.values():
+                if restrict_to_vendor_service and (
+                    (ch.service_uuid or "").lower() != SERVICE_UUID.lower()
+                ):
+                    continue
+                props = ch.properties
+                if w is None and ("write" in props or "write-without-response" in props):
+                    w = ch
+                if n is None and "notify" in props:
+                    n = ch
+            return w, n
+
+        write, notify = scan(True)
+        if write is None or notify is None:
+            write, notify = scan(False)
+        return write, notify
 
     def _on_disconnect(self, _client) -> None:
         self._authed = False
+        self._write_char = None
+        self._notify_char = None
 
     def _on_notify(self, _char, data: bytearray) -> None:
         self._queue.put_nowait(bytes(data))
 
     async def disconnect(self) -> None:
-        client, self._client, self._authed = self._client, None, False
+        client, self._client = self._client, None
+        self._authed = False
+        self._write_char = None
+        self._notify_char = None
         if client is not None and client.is_connected:
             try:
                 await client.disconnect()
@@ -140,11 +216,10 @@ class TacticalBLEClient:
 
     # ---- framed exchange ----
     async def _exchange(self, frame: bytes, expect_cmd: int, timeout: float = 4.0):
-        from .const import WRITE_UUID
-
         while not self._queue.empty():           # drop stale notifications
             self._queue.get_nowait()
-        await self._client.write_gatt_char(WRITE_UUID, frame, response=True)
+        # write to the resolved characteristic object (not a UUID lookup)
+        await self._client.write_gatt_char(self._write_char, frame, response=True)
         loop = asyncio.get_running_loop()
         deadline = loop.time() + timeout
         while True:
