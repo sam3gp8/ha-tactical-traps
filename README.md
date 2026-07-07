@@ -6,10 +6,6 @@ It uses Home Assistant's built-in Bluetooth stack, talks the lock's `F5` protoco
 directly (login → status → `token XOR 0x35` toggle), and exposes each cabinet as a
 standard `lock.` entity with an optional auto-relock for gravity-drop cabinets.
 
-> Prefer the **add-on** (its own UI, BLE console, Brutus/Listen/Calibrate tools)?
-> That lives at <https://github.com/sam3gp8/ha-tactical-traps>. This repository is
-> the lighter, native **integration** for everyday use.
-
 ## Install via HACS
 
 1. HACS → **⋮ → Custom repositories**.
